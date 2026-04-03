@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkillSwap – Peer-to-Peer Skill Exchange</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔄</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* ─── Hero Section ──────────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding: 100px 0 80px;
+    }
+
+    .hero-bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(108, 99, 255, 0.25), transparent 70%);
+      top: -200px; left: -200px;
+      animation-delay: 0s;
+    }
+
+    .orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(255, 101, 132, 0.2), transparent 70%);
+      bottom: -100px; right: -100px;
+      animation-delay: -3s;
+    }
+
+    .orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(67, 217, 173, 0.15), transparent 70%);
+      top: 40%; left: 60%;
+      animation-delay: -1.5s;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.4em 1.2em;
+      background: rgba(108, 99, 255, 0.15);
+      border: 1px solid rgba(108, 99, 255, 0.4);
+      border-radius: 50px;
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 800;
+      line-height: 1.08;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.6s 0.1s ease forwards;
+      opacity: 0;
+    }
+
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200% auto;
+      animation: gradientFlow 4s ease infinite;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% center; }
+      50% { background-position: 100% center; }
+      100% { background-position: 0% center; }
+    }
+
+    .hero-desc {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+      animation: fadeInUp 0.6s 0.2s ease forwards;
+      opacity: 0;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.6s 0.3s ease forwards;
+      opacity: 0;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 3rem;
+      animation: fadeInUp 0.6s 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+
+    /* ─── Float Cards ───────────────────────────────────────────────────────── */
+    .hero-visual {
+      position: relative;
+      height: 520px;
+      animation: fadeIn 0.8s 0.4s ease forwards;
+      opacity: 0;
+    }
+
+    .float-card {
+      position: absolute;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-lg);
+      transition: var(--transition);
+    }
+
+    .float-card:hover { transform: translateY(-6px) !important; box-shadow: var(--shadow-lg), var(--shadow-glow); }
+
+    .fc-main {
+      width: 280px;
+      top: 40px; left: 50%;
+      transform: translateX(-50%);
+      animation: floatCard 5s ease-in-out infinite;
+    }
+
+    .fc-match {
+      width: 200px;
+      top: 200px; left: 20px;
+      animation: floatCard 5s 1s ease-in-out infinite;
+    }
+
+    .fc-req {
+      width: 210px;
+      top: 220px; right: 20px;
+      animation: floatCard 5s 2s ease-in-out infinite;
+    }
+
+    .fc-msg {
+      width: 180px;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      animation: floatCard 5s 0.5s ease-in-out infinite;
+    }
+
+    @keyframes floatCard {
+      0%, 100% { margin-top: 0; }
+      50% { margin-top: -12px; }
+    }
+
+    /* ─── Features Section ──────────────────────────────────────────────────── */
+    .features-section {
+      padding: 100px 0;
+      position: relative;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      height: 100%;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: var(--feature-color, var(--primary));
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+      border-radius: 0 0 3px 3px;
+    }
+
+    .feature-card:hover::before { transform: scaleX(1); }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--border-hover) !important; }
+
+    .feature-icon {
+      width: 56px; height: 56px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .feature-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .feature-desc { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
+
+    /* ─── How It Works ──────────────────────────────────────────────────────── */
+    .how-section {
+      padding: 100px 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+
+    .step-item {
+      text-align: center;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .step-number {
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: white;
+      margin: 0 auto 1.25rem;
+      box-shadow: 0 0 30px rgba(108, 99, 255, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-connector {
+      position: absolute;
+      top: 52px;
+      left: calc(50% + 40px);
+      right: calc(-50% + 40px);
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      border-radius: 1px;
+    }
+
+    .step-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; }
+    .step-desc { color: var(--text-muted); font-size: 0.875rem; }
+
+    /* ─── CTA Section ───────────────────────────────────────────────────────── */
+    .cta-section {
+      padding: 100px 0;
+      text-align: center;
+      position: relative;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(255, 101, 132, 0.1));
+      border: 1px solid rgba(108, 99, 255, 0.3);
+      border-radius: var(--radius-xl);
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+      animation: pulse-glow 4s ease-in-out infinite;
+    }
+
+    .cta-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    /* ─── Footer ────────────────────────────────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* ─── Skill Chips Carousel ──────────────────────────────────────────────── */
+    .skills-marquee {
+      overflow: hidden;
+      padding: 1rem 0;
+      margin: 3rem 0;
+    }
+
+    .skills-track {
+      display: flex;
+      gap: 12px;
+      animation: marquee 20s linear infinite;
+      width: max-content;
+    }
+
+    .skills-track:hover { animation-play-state: paused; }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+
+  <!-- ─── Navbar ─────────────────────────────────────────────────────────────── -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <span class="logo-icon"><i class="bi bi-arrow-left-right"></i></span>
+        SkillSwap
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <i class="bi bi-list text-white"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto align-items-center gap-1">
+          <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+          <li class="nav-item" id="nav-dashboard" style="display:none"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+          <li class="nav-item" id="nav-profile" style="display:none"><a class="nav-link" href="/profile">Profile</a></li>
+          <li class="nav-item ms-2" id="nav-login"><a class="btn btn-outline-primary btn-sm" href="/login">Log In</a></li>
+          <li class="nav-item ms-2" id="nav-signup"><a class="btn btn-primary btn-sm" href="/signup">Get Started</a></li>
+          <li class="nav-item ms-2" id="nav-logout" style="display:none">
+            <button class="btn btn-sm" style="background:var(--glass-light);color:var(--text-secondary);border:1px solid var(--border)" onclick="logout()">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Hero ───────────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-bg-orb orb-1"></div>
+    <div class="hero-bg-orb orb-2"></div>
+    <div class="hero-bg-orb orb-3"></div>
+
+    <div class="container position-relative" style="z-index:1">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+          <div class="hero-label">
+            <i class="bi bi-stars"></i> The Future of Learning Together
+          </div>
+          <h1 class="hero-title">
+            Exchange Skills,<br>
+            <span class="gradient-text">Grow Together</span>
+          </h1>
+          <p class="hero-desc">
+            Connect with talented peers, share what you know, learn what you love.
+            SkillSwap matches you with the perfect learning partner — no money needed.
+          </p>
+          <div class="hero-cta">
+            <a href="/signup" class="btn btn-primary btn-lg">
+              <i class="bi bi-rocket-takeoff me-2"></i> Start Swapping
+            </a>
+            <a href="/login" class="btn btn-lg" style="background:var(--glass-light);color:var(--text-primary);border:1px solid var(--border)">
+              <i class="bi bi-play-circle me-2"></i> See How It Works
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div class="stat-item">
+              <div class="stat-num">500+</div>
+              <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num">1.2K</div>
+              <div class="stat-label">Skills Listed</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num">300+</div>
+              <div class="stat-label">Matches Made</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="hero-visual">
+            <!-- Main profile card -->
+            <div class="float-card fc-main">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="avatar avatar-md avatar-gradient-1">A</div>
+                <div>
+                  <div style="font-weight:700;font-size:0.95rem">Alex Chen</div>
+                  <div style="font-size:0.78rem;color:var(--text-muted)">Full-Stack Developer</div>
+                </div>
+                <div class="ms-auto">
+                  <span class="match-score match-high"><i class="bi bi-stars"></i> 92%</span>
+                </div>
+              </div>
+              <div class="mb-2">
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">OFFERS</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="skill-badge skill-badge-offered">React</span>
+                  <span class="skill-badge skill-badge-offered">Node.js</span>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">WANTS</div>
+                <div class="d-flex flex-wrap gap-1">
+                  <span class="skill-badge skill-badge-wanted">UI Design</span>
+                  <span class="skill-badge skill-badge-wanted">Figma</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Match card -->
+            <div class="float-card fc-match">
+              <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin-bottom:8px">
+                <i class="bi bi-stars text-warning me-1"></i> YOUR BEST MATCH
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar avatar-sm avatar-gradient-2">S</div>
+                <div style="font-size:0.85rem;font-weight:600">Sara Kim</div>
+              </div>
+              <div style="margin-top:10px">
+                <div style="height:6px;background:var(--surface-3);border-radius:3px;overflow:hidden">
+                  <div style="width:88%;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:3px;animation:progress 2s ease-in-out infinite alternate"></div>
+                </div>
+                <div style="font-size:0.75rem;color:var(--accent);margin-top:4px;font-weight:600">88% compatible</div>
+              </div>
+            </div>
+
+            <!-- Request card -->
+            <div class="float-card fc-req">
+              <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin-bottom:8px">
+                <i class="bi bi-envelope-fill" style="color:var(--accent-warm)"></i> NEW REQUEST
+              </div>
+              <div style="font-size:0.85rem;font-weight:600">Marco wants to swap</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin:6px 0">Python → Spanish</div>
+              <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-sm btn-success" style="flex:1;padding:0.25rem">Accept</button>
+                <button class="btn btn-sm btn-danger" style="flex:1;padding:0.25rem">Decline</button>
+              </div>
+            </div>
+
+            <!-- Message card -->
+            <div class="float-card fc-msg">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <div class="avatar avatar-sm avatar-gradient-3">J</div>
+                <div style="font-size:0.82rem;font-weight:600">Jordan</div>
+                <div class="ms-auto" style="font-size:0.7rem;color:var(--text-muted)">2m ago</div>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-secondary)">Hey! Ready for our first session? 🎯</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Skills Marquee ──────────────────────────────────────────────────────── -->
+  <div style="padding:20px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)">
+    <div class="skills-marquee">
+      <div class="skills-track" id="skills-track"></div>
+    </div>
+  </div>
+
+  <!-- ─── Features Section ────────────────────────────────────────────────────── -->
+  <section class="features-section">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="hero-label mx-auto mb-3">
+          <i class="bi bi-grid-3x3-gap-fill"></i> Everything You Need
+        </div>
+        <h2 class="section-title" style="font-size:2.5rem">Built for Real Learning</h2>
+        <p class="section-subtitle" style="font-size:1rem;max-width:500px;margin:0.75rem auto 0">
+          Every feature designed to make skill exchange seamless, effective, and enjoyable.
+        </p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card" style="--feature-color: var(--primary)">
+            <div class="feature-icon" style="background:rgba(108,99,255,0.15);color:var(--primary)">
+              <i class="bi bi-person-badge-fill"></i>
+            </div>
+            <div class="feature-title">Smart Profiles</div>
+            <p class="feature-desc">List your skills offered and skills wanted. Build a profile that attracts the right exchange partners instantly.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card" style="--feature-color: var(--accent)">
+            <div class="feature-icon" style="background:rgba(67,217,173,0.15);color:var(--accent)">
+              <i class="bi bi-stars"></i>
+            </div>
+            <div class="feature-title">AI-Powered Matching</div>
+            <p class="feature-desc">Our algorithm computes compatibility scores between users based on skill overlap, surfacing your best potential partners.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card" style="--feature-color: var(--secondary)">
+            <div class="feature-icon" style="background:rgba(255,101,132,0.15);color:var(--secondary)">
+              <i class="bi bi-arrow-left-right"></i>
+            </div>
+            <div class="feature-title">Exchange Requests</div>
+            <p class="feature-desc">Send targeted skill exchange requests with custom messages. Accept or decline — full control, always.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card" style="--feature-color: var(--accent-warm)">
+            <div class="feature-icon" style="background:rgba(255,179,71,0.15);color:var(--accent-warm)">
+              <i class="bi bi-chat-dots-fill"></i>
+            </div>
+            <div class="feature-title">Integrated Chat</div>
+            <p class="feature-desc">Once a request is accepted, message your partner directly. No third-party apps needed to coordinate your sessions.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card" style="--feature-color: var(--primary)">
+            <div class="feature-icon" style="background:rgba(108,99,255,0.15);color:var(--primary)">
+              <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <div class="feature-title">Secure Auth</div>
+            <p class="feature-desc">Bcrypt-hashed passwords, session-based auth, and protected routes ensure your account is always safe.</p>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <div class="feature-card" style="--feature-color: var(--accent)">
+            <div class="feature-icon" style="background:rgba(67,217,173,0.15);color:var(--accent)">
+              <i class="bi bi-phone-fill"></i>
+            </div>
+            <div class="feature-title">Fully Responsive</div>
+            <p class="feature-desc">Perfect on mobile, tablet, or desktop. SkillSwap works wherever you are, whenever inspiration strikes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── How It Works ────────────────────────────────────────────────────────── -->
+  <section class="how-section">
+    <div class="container">
+      <div class="text-center mb-5">
+        <h2 class="section-title" style="font-size:2.5rem">How It Works</h2>
+        <p class="section-subtitle" style="font-size:1rem;margin-top:0.75rem">Four simple steps to your first skill swap</p>
+      </div>
+      <div class="row g-0">
+        <div class="col-6 col-md-3">
+          <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-title">Create Profile</div>
+            <div class="step-desc">Sign up and list your skills offered & wanted</div>
+            <div class="step-connector d-none d-md-block"></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-title">Find Matches</div>
+            <div class="step-desc">Browse users and discover your best skill matches</div>
+            <div class="step-connector d-none d-md-block"></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-title">Send Request</div>
+            <div class="step-desc">Propose a skill exchange with a personal message</div>
+            <div class="step-connector d-none d-md-block"></div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="step-item">
+            <div class="step-number">4</div>
+            <div class="step-title">Start Learning</div>
+            <div class="step-desc">Connect, chat, and grow your skills together</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA Section ─────────────────────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <div class="orb-1" style="opacity:0.5;top:-100px;left:-100px;width:300px;height:300px"></div>
+        <div class="orb-2" style="opacity:0.4;bottom:-100px;right:-100px;width:250px;height:250px"></div>
+        <div class="position-relative" style="z-index:1">
+          <h2 class="cta-title">Ready to Swap Skills?</h2>
+          <p style="color:var(--text-secondary);font-size:1.05rem;margin-bottom:2rem;max-width:400px;margin-left:auto;margin-right:auto">
+            Join hundreds of learners who are growing faster by teaching what they know.
+          </p>
+          <a href="/signup" class="btn btn-primary btn-lg">
+            <i class="bi bi-rocket-takeoff me-2"></i> Create Free Account
+          </a>
+          <div class="mt-3" style="font-size:0.85rem;color:var(--text-muted)">
+            <i class="bi bi-check-circle-fill me-1" style="color:var(--accent)"></i> No credit card required
+            <span class="mx-2">·</span>
+            <i class="bi bi-check-circle-fill me-1" style="color:var(--accent)"></i> Completely free
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ──────────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="navbar-brand" style="font-size:1.2rem">
+          <span class="logo-icon" style="width:28px;height:28px;font-size:0.85rem"><i class="bi bi-arrow-left-right"></i></span>
+          SkillSwap
+        </div>
+        <div style="color:var(--text-muted)">© 2024 SkillSwap. Built for learners, by learners.</div>
+        <div class="d-flex gap-3">
+          <a href="/login" style="color:var(--text-muted)">Login</a>
+          <a href="/signup" style="color:var(--text-muted)">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    const allSkills = ['Python','JavaScript','React','Node.js','Figma','UI Design','Machine Learning',
+      'Spanish','French','Guitar','Photography','Data Science','TypeScript','Rust','Go','SQL',
+      'Kubernetes','Docker','Vue.js','Swift','Flutter','Kotlin','Java','C++','Sketch','Blender',
+      'After Effects','Excel','SEO','Copywriting','Public Speaking','Piano','Yoga','Drawing','Cooking'];
+
+    // Build marquee
+    const doubled = [...allSkills, ...allSkills];
+    const colors = ['skill-badge-offered','skill-badge-wanted','skill-badge-match'];
+    const track = document.getElementById('skills-track');
+    doubled.forEach((s, i) => {
+      const span = document.createElement('span');
+      span.className = 'skill-badge ' + colors[i % 3];
+      span.textContent = s;
+      span.style.whiteSpace = 'nowrap';
+      track.appendChild(span);
+    });
+
+    // Check auth and update nav
+    $.get('/api/auth/check').done(res => {
+      if (res.loggedIn) {
+        $('#nav-login, #nav-signup').hide();
+        $('#nav-dashboard, #nav-profile, #nav-logout').show();
+      }
+    });
+  </script>
+</body>
+</html>

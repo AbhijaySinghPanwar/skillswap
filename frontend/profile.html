@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile – SkillSwap</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .profile-hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 3rem 0 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 100% at 50% 0%, rgba(108,99,255,0.12), transparent 60%);
+      pointer-events: none;
+    }
+    .profile-avatar-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .avatar-ring {
+      position: absolute; inset: -4px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+      z-index: -1;
+      animation: spin 8s linear infinite;
+    }
+    .profile-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+    .profile-tab {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.9rem;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+    }
+    .profile-tab:hover { color: var(--text-primary); }
+    .profile-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    .section-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .section-card-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      min-width: 100px;
+    }
+    .info-value { color: var(--text-primary); font-size: 0.9rem; }
+    .save-btn-wrap {
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(to top, var(--dark) 60%, transparent);
+      padding: 1.5rem 0 1rem;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand" href="/"><span class="logo-icon"><i class="bi bi-arrow-left-right"></i></span>SkillSwap</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto align-items-center gap-1">
+          <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/profile">Profile</a></li>
+          <li class="nav-item ms-2">
+            <button class="btn btn-sm" style="background:var(--glass-light);color:var(--text-secondary);border:1px solid var(--border)" onclick="logout()">
+              <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-content">
+    <!-- Profile Hero -->
+    <div class="profile-hero">
+      <div class="profile-hero-bg"></div>
+      <div class="container position-relative" style="z-index:1">
+        <div class="d-flex align-items-end gap-4 flex-wrap pb-0">
+          <div class="profile-avatar-wrap" id="hero-avatar-wrap">
+            <div class="avatar-ring"></div>
+            <div id="hero-avatar" class="avatar avatar-xl avatar-gradient-1">?</div>
+          </div>
+          <div class="pb-4 flex-fill">
+            <div style="font-size:0.75rem;color:var(--primary);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Your Profile</div>
+            <h1 id="hero-name" style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin-bottom:4px">Loading...</h1>
+            <div id="hero-email" style="color:var(--text-muted);font-size:0.9rem"></div>
+            <div id="hero-bio" style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;max-width:500px"></div>
+            <div class="d-flex gap-3 mt-3 flex-wrap" id="hero-stats"></div>
+          </div>
+          <div class="pb-4">
+            <button class="btn btn-primary" id="edit-toggle-btn" onclick="toggleEditMode()">
+              <i class="bi bi-pencil me-2"></i>Edit Profile
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-tabs">
+          <button class="profile-tab active" onclick="switchProfileTab('overview', this)">Overview</button>
+          <button class="profile-tab" onclick="switchProfileTab('edit', this)" id="edit-tab-btn">Edit Profile</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="container py-4">
+      <!-- Overview Tab -->
+      <div id="tab-overview">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(67,217,173,0.15);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-mortarboard-fill"></i></span>
+                Skills I Offer
+              </div>
+              <div id="view-offered" class="d-flex flex-wrap gap-2"></div>
+            </div>
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(255,179,71,0.15);color:var(--accent-warm);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-search-heart-fill"></i></span>
+                Skills I Want
+              </div>
+              <div id="view-wanted" class="d-flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(108,99,255,0.15);color:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-person-fill"></i></span>
+                Account Info
+              </div>
+              <div class="info-row">
+                <span class="info-label"><i class="bi bi-person me-1"></i>Name</span>
+                <span class="info-value" id="info-name">–</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label"><i class="bi bi-envelope me-1"></i>Email</span>
+                <span class="info-value" id="info-email">–</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label"><i class="bi bi-calendar me-1"></i>Joined</span>
+                <span class="info-value" id="info-joined">–</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label"><i class="bi bi-tools me-1"></i>Skills</span>
+                <span class="info-value" id="info-skills-count">–</span>
+              </div>
+            </div>
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(255,101,132,0.15);color:var(--secondary);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-lightning-fill"></i></span>
+                Quick Actions
+              </div>
+              <div class="d-flex flex-column gap-2">
+                <a href="/dashboard" class="btn btn-sm" style="background:var(--glass-light);color:var(--text-secondary);border:1px solid var(--border);text-align:left">
+                  <i class="bi bi-compass me-2" style="color:var(--primary)"></i>Explore Users
+                </a>
+                <button class="btn btn-sm" style="background:var(--glass-light);color:var(--text-secondary);border:1px solid var(--border);text-align:left" onclick="switchProfileTab('edit', document.querySelectorAll('.profile-tab')[1])">
+                  <i class="bi bi-pencil me-2" style="color:var(--accent)"></i>Update My Skills
+                </button>
+                <button class="btn btn-sm" style="background:rgba(255,101,132,0.1);color:var(--secondary);border:1px solid rgba(255,101,132,0.3);text-align:left" onclick="logout()">
+                  <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Tab -->
+      <div id="tab-edit" style="display:none;animation:fadeInUp 0.4s ease forwards">
+        <div class="row g-4">
+          <div class="col-lg-8">
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(108,99,255,0.15);color:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-person-fill"></i></span>
+                Basic Information
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Full Name</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-person"></i></span>
+                  <input type="text" id="edit-name" class="form-control" placeholder="Your name" />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Email <span style="color:var(--text-muted);font-weight:400">(cannot be changed)</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input type="email" id="edit-email" class="form-control" disabled style="opacity:0.6" />
+                </div>
+              </div>
+              <div class="mb-0">
+                <label class="form-label">Bio</label>
+                <textarea id="edit-bio" class="form-control" rows="3" placeholder="Tell others about yourself, your experience, and what you're looking for..."></textarea>
+              </div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(67,217,173,0.15);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-mortarboard-fill"></i></span>
+                Skills I Offer
+                <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:auto">Press Enter to add</span>
+              </div>
+              <div class="tag-input-container" id="edit-offered-container">
+                <input type="text" class="tag-input" id="edit-offered-input" placeholder="Add a skill you can teach..." />
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px"><i class="bi bi-lightbulb me-1"></i>e.g. Python, Guitar, Photography, Figma</div>
+            </div>
+
+            <div class="section-card">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(255,179,71,0.15);color:var(--accent-warm);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-search-heart-fill"></i></span>
+                Skills I Want to Learn
+                <span style="font-size:0.78rem;color:var(--text-muted);font-weight:400;margin-left:auto">Press Enter to add</span>
+              </div>
+              <div class="tag-input-container" id="edit-wanted-container">
+                <input type="text" class="tag-input" id="edit-wanted-input" placeholder="Add a skill you want to learn..." />
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px"><i class="bi bi-lightbulb me-1"></i>e.g. React, Spanish, Cooking, UI Design</div>
+            </div>
+
+            <div class="save-btn-wrap">
+              <button class="btn btn-primary btn-lg w-100" id="save-profile-btn" onclick="saveProfile()">
+                <span id="save-btn-text"><i class="bi bi-check2-circle me-2"></i>Save Changes</span>
+                <span id="save-spinner" class="d-none"><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="section-card" style="position:sticky;top:90px">
+              <div class="section-card-title">
+                <span style="width:32px;height:32px;background:rgba(255,179,71,0.15);color:var(--accent-warm);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-lightbulb-fill"></i></span>
+                Profile Tips
+              </div>
+              <div class="d-flex flex-column gap-3">
+                <div style="padding:0.75rem;background:var(--surface-2);border-radius:var(--radius-md);font-size:0.82rem">
+                  <div style="font-weight:600;color:var(--accent);margin-bottom:4px"><i class="bi bi-check-circle-fill me-1"></i>Add 3–5 skills</div>
+                  <div style="color:var(--text-muted)">More skills = better matches and more requests</div>
+                </div>
+                <div style="padding:0.75rem;background:var(--surface-2);border-radius:var(--radius-md);font-size:0.82rem">
+                  <div style="font-weight:600;color:var(--primary);margin-bottom:4px"><i class="bi bi-stars me-1"></i>Be specific</div>
+                  <div style="color:var(--text-muted)">Write "React.js" instead of just "Programming"</div>
+                </div>
+                <div style="padding:0.75rem;background:var(--surface-2);border-radius:var(--radius-md);font-size:0.82rem">
+                  <div style="font-weight:600;color:var(--accent-warm);margin-bottom:4px"><i class="bi bi-person-heart me-1"></i>Write a bio</div>
+                  <div style="color:var(--text-muted)">A friendly bio increases your response rate by 3x</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/utils.js"></script>
+  <script>
+    let editOfferedTags, editWantedTags;
+    let userData = null;
+
+    checkAuth().then(auth => {
+      if (!auth || !auth.loggedIn) return;
+      loadProfile();
+    });
+
+    function loadProfile() {
+      $.get('/api/auth/me').done(res => {
+        userData = res.user;
+        renderProfile(res.user);
+        populateEditForm(res.user);
+      }).fail(() => showToast('Failed to load profile', 'error'));
+    }
+
+    function renderProfile(u) {
+      const initial = u.name.charAt(0).toUpperCase();
+      $('#hero-avatar').text(initial);
+      $('#hero-name').text(u.name);
+      $('#hero-email').text(u.email);
+      $('#hero-bio').text(u.bio || 'No bio yet — add one in Edit Profile!');
+      $('#info-name').text(u.name);
+      $('#info-email').text(u.email);
+      $('#info-joined').text(new Date(u.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }));
+      $('#info-skills-count').text((u.skillsOffered?.length || 0) + ' offered, ' + (u.skillsWanted?.length || 0) + ' wanted');
+
+      $('#hero-stats').html(`
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(67,217,173,0.1);border:1px solid rgba(67,217,173,0.2);border-radius:50px;padding:0.3em 0.9em;font-size:0.8rem">
+          <i class="bi bi-mortarboard-fill" style="color:var(--accent)"></i>
+          <span style="color:var(--accent);font-weight:600">${u.skillsOffered?.length || 0}</span>
+          <span style="color:var(--text-muted)">skills offered</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,179,71,0.1);border:1px solid rgba(255,179,71,0.2);border-radius:50px;padding:0.3em 0.9em;font-size:0.8rem">
+          <i class="bi bi-search-heart-fill" style="color:var(--accent-warm)"></i>
+          <span style="color:var(--accent-warm);font-weight:600">${u.skillsWanted?.length || 0}</span>
+          <span style="color:var(--text-muted)">skills wanted</span>
+        </div>
+      `);
+
+      const $offered = $('#view-offered');
+      const $wanted = $('#view-wanted');
+
+      if (u.skillsOffered?.length) {
+        $offered.html(u.skillsOffered.map(s => `<span class="skill-badge skill-badge-offered" style="font-size:0.9rem;padding:0.4em 1em">${s}</span>`).join(''));
+      } else {
+        $offered.html('<span style="color:var(--text-muted);font-size:0.875rem">No skills listed yet. <a href="#" onclick="switchProfileTab(\'edit\', document.querySelectorAll(\'.profile-tab\')[1]);return false" style="color:var(--primary)">Add some!</a></span>');
+      }
+
+      if (u.skillsWanted?.length) {
+        $wanted.html(u.skillsWanted.map(s => `<span class="skill-badge skill-badge-wanted" style="font-size:0.9rem;padding:0.4em 1em">${s}</span>`).join(''));
+      } else {
+        $wanted.html('<span style="color:var(--text-muted);font-size:0.875rem">No skills listed yet.</span>');
+      }
+    }
+
+    function populateEditForm(u) {
+      $('#edit-name').val(u.name);
+      $('#edit-email').val(u.email);
+      $('#edit-bio').val(u.bio || '');
+
+      editOfferedTags = initTagInput('edit-offered-container', 'edit-offered-input', 'offered');
+      editWantedTags = initTagInput('edit-wanted-container', 'edit-wanted-input', 'wanted');
+
+      if (u.skillsOffered?.length) editOfferedTags.setTags(u.skillsOffered);
+      if (u.skillsWanted?.length) editWantedTags.setTags(u.skillsWanted);
+    }
+
+    function switchProfileTab(tab, btn) {
+      $('.profile-tab').removeClass('active');
+      $(btn).addClass('active');
+      $('#tab-overview, #tab-edit').hide();
+      $(`#tab-${tab}`).show();
+    }
+
+    function toggleEditMode() {
+      switchProfileTab('edit', document.querySelectorAll('.profile-tab')[1]);
+    }
+
+    function saveProfile() {
+      const name = $('#edit-name').val().trim();
+      const bio = $('#edit-bio').val().trim();
+      const skillsOffered = editOfferedTags ? editOfferedTags.getTags() : [];
+      const skillsWanted = editWantedTags ? editWantedTags.getTags() : [];
+
+      if (!name) return showToast('Name cannot be empty', 'error');
+
+      $('#save-btn-text').addClass('d-none');
+      $('#save-spinner').removeClass('d-none');
+      $('#save-profile-btn').prop('disabled', true);
+
+      $.ajax({
+        url: '/api/users/profile',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify({ name, bio, skillsOffered, skillsWanted }),
+        success: function (res) {
+          showToast('Profile updated successfully! ✨', 'success');
+          userData = res.user;
+          renderProfile(res.user);
+          switchProfileTab('overview', document.querySelectorAll('.profile-tab')[0]);
+        },
+        error: function (xhr) {
+          showToast(xhr.responseJSON?.message || 'Failed to update profile', 'error');
+        },
+        complete: function () {
+          $('#save-btn-text').removeClass('d-none');
+          $('#save-spinner').addClass('d-none');
+          $('#save-profile-btn').prop('disabled', false);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
