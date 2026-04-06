@@ -3,6 +3,13 @@
 A full-stack web application where users can exchange skills with each other. Built with Node.js, Express, MongoDB, and a premium Bootstrap UI.
 
 ---
+## 🌐 Live Demo
+
+👉 https://skillswap-b68k.onrender.com
+
+> ⚠️ Note: On first load, the app may take ~30–60 seconds to start due to Render free tier cold start.
+
+---
 
 ## 🚀 Quick Start
 
