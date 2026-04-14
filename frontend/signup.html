@@ -15,21 +15,22 @@
       justify-content: center;
       padding: 100px 1rem 3rem;
       position: relative;
+      background: var(--background);
     }
     .auth-orb-1 {
-      position: fixed; top: -150px; left: -150px;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(108,99,255,0.2), transparent 70%);
+      position: fixed; top: -160px; left: -160px;
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, rgba(0,82,255,0.07), transparent 70%);
       border-radius: 50%; pointer-events: none; z-index: 0;
     }
     .auth-orb-2 {
-      position: fixed; bottom: -100px; right: -100px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(67,217,173,0.15), transparent 70%);
+      position: fixed; bottom: -120px; right: -120px;
+      width: 440px; height: 440px;
+      background: radial-gradient(circle, rgba(77,124,255,0.05), transparent 70%);
       border-radius: 50%; pointer-events: none; z-index: 0;
     }
     .auth-card {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius-xl);
       padding: 2.5rem;
@@ -37,8 +38,16 @@
       max-width: 520px;
       position: relative;
       z-index: 1;
-      box-shadow: var(--shadow-lg);
-      animation: fadeInUp 0.5s ease forwards;
+      box-shadow: var(--shadow-xl);
+      animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%; transform: translateX(-50%);
+      width: 60px; height: 3px;
+      border-radius: 0 0 4px 4px;
+      background: linear-gradient(to right, var(--accent), var(--accent-2));
     }
     .auth-logo { text-align: center; margin-bottom: 2rem; }
     .logo-mark {
@@ -50,8 +59,8 @@
       margin: 0 auto 1rem;
       box-shadow: 0 0 40px rgba(108,99,255,0.4);
     }
-    .auth-title { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; text-align: center; margin-bottom: 0.3rem; }
-    .auth-subtitle { text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+    .auth-title { font-family: 'Calistoga', Georgia, serif; font-size: 1.9rem; font-weight: 400; letter-spacing:-0.02em; text-align: center; margin-bottom: 0.3rem; color:var(--foreground); }
+    .auth-subtitle { text-align: center; color: var(--muted-fg); font-size: 0.875rem; }
     .step-dots {
       display: flex; gap: 8px; justify-content: center; margin: 1.5rem 0;
     }
@@ -64,11 +73,13 @@
     .form-step { display: none; }
     .form-step.active { display: block; animation: fadeInUp 0.3s ease forwards; }
     .step-label {
-      font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 1px; color: var(--primary); margin-bottom: 0.25rem;
+      font-size: 0.7rem; font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--accent); margin-bottom: 0.25rem;
     }
-    .step-heading { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem; }
-    .step-desc { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+    .step-heading { font-family: 'Inter', sans-serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 0.2rem; color: var(--foreground); }
+    .step-desc { color: var(--muted-fg); font-size: 0.85rem; margin-bottom: 1.5rem; }
     .tag-hint { font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; }
     .password-toggle {
       position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
@@ -86,6 +97,26 @@
       transition: width 0.4s ease, background 0.4s ease;
     }
     .strength-text { font-size: 0.75rem; margin-top: 4px; }
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 0.7rem 1rem;
+      background: var(--card); color: var(--foreground);
+      border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      font-weight: 600; font-size: 0.875rem;
+      cursor: pointer; transition: var(--transition); text-decoration: none;
+    }
+    .btn-google:hover { background: var(--muted); border-color: rgba(0,82,255,0.2); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .btn-google img { width: 18px; height: 18px; }
+    .divider-text {
+      position: relative; text-align: center; color: var(--text-muted);
+      font-size: 0.8rem; margin: 1.25rem 0;
+    }
+    .divider-text::before, .divider-text::after {
+      content: ''; position: absolute; top: 50%;
+      width: calc(50% - 30px); height: 1px; background: var(--border);
+    }
+    .divider-text::before { left: 0; }
+    .divider-text::after { right: 0; }
   </style>
 </head>
 <body>
@@ -111,6 +142,14 @@
         <h1 class="auth-title">Join SkillSwap</h1>
         <p class="auth-subtitle">Create your account in 3 simple steps</p>
       </div>
+
+      <!-- Google OAuth Fast Sign-Up -->
+      <a href="/api/auth/google" class="btn-google mb-1">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+        Continue with Google
+      </a>
+
+      <div class="divider-text">or sign up with email</div>
 
       <div class="step-dots">
         <div class="step-dot active" id="dot-1"></div>

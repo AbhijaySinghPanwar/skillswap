@@ -13,26 +13,28 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 100px 1rem 2rem;
+      padding: 100px 1rem 2.5rem;
       position: relative;
+      background: var(--background);
     }
 
+    /* Ambient corner glows */
     .auth-orb-1 {
-      position: fixed; top: -150px; left: -150px;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(108,99,255,0.2), transparent 70%);
+      position: fixed; top: -160px; left: -160px;
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, rgba(0,82,255,0.07), transparent 70%);
       border-radius: 50%; pointer-events: none; z-index: 0;
     }
 
     .auth-orb-2 {
-      position: fixed; bottom: -100px; right: -100px;
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(255,101,132,0.15), transparent 70%);
+      position: fixed; bottom: -120px; right: -120px;
+      width: 440px; height: 440px;
+      background: radial-gradient(circle, rgba(77,124,255,0.05), transparent 70%);
       border-radius: 50%; pointer-events: none; z-index: 0;
     }
 
     .auth-card {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius-xl);
       padding: 2.5rem;
@@ -40,8 +42,19 @@
       max-width: 440px;
       position: relative;
       z-index: 1;
-      box-shadow: var(--shadow-lg);
-      animation: fadeInUp 0.5s ease forwards;
+      box-shadow: var(--shadow-xl);
+      animation: fadeInUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards;
+    }
+
+    /* Electric accent tab at top of card */
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 60px; height: 3px;
+      border-radius: 0 0 4px 4px;
+      background: linear-gradient(to right, var(--accent), var(--accent-2));
     }
 
     .auth-logo {
@@ -50,38 +63,37 @@
     }
 
     .auth-logo .logo-mark {
-      width: 60px; height: 60px;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: white;
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; color: white;
       margin: 0 auto 1rem;
-      box-shadow: 0 0 40px rgba(108,99,255,0.4);
+      box-shadow: 0 6px 24px rgba(0,82,255,0.3);
     }
 
     .auth-title {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 800;
+      font-family: 'Calistoga', Georgia, serif;
+      font-size: 1.9rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
       text-align: center;
       margin-bottom: 0.3rem;
+      color: var(--foreground);
     }
 
     .auth-subtitle {
       text-align: center;
-      color: var(--text-muted);
-      font-size: 0.9rem;
+      color: var(--muted-fg);
+      font-size: 0.875rem;
       margin-bottom: 0;
     }
 
     .divider-text {
       position: relative;
       text-align: center;
-      color: var(--text-muted);
-      font-size: 0.8rem;
+      color: var(--muted-fg);
+      font-size: 0.78rem;
       margin: 1.25rem 0;
     }
 
@@ -89,41 +101,54 @@
       content: '';
       position: absolute;
       top: 50%;
-      width: calc(50% - 30px);
+      width: calc(50% - 36px);
       height: 1px;
       background: var(--border);
     }
 
     .divider-text::before { left: 0; }
-    .divider-text::after { right: 0; }
+    .divider-text::after  { right: 0; }
 
     .password-toggle {
       position: absolute;
-      right: 14px;
-      top: 50%;
+      right: 14px; top: 50%;
       transform: translateY(-50%);
       cursor: pointer;
-      color: var(--text-muted);
+      color: var(--muted-fg);
       z-index: 10;
-      transition: color 0.2s;
-      background: none;
-      border: none;
-      padding: 0;
+      background: none; border: none; padding: 0;
+      transition: color 0.15s;
     }
 
-    .password-toggle:hover { color: var(--text-primary); }
-
+    .password-toggle:hover { color: var(--foreground); }
     .input-password-wrap { position: relative; }
 
     .demo-hint {
-      background: rgba(108,99,255,0.1);
-      border: 1px solid rgba(108,99,255,0.2);
+      background: rgba(0,82,255,0.05);
+      border: 1px solid rgba(0,82,255,0.15);
       border-radius: var(--radius-md);
-      padding: 0.85rem 1rem;
-      font-size: 0.82rem;
-      color: var(--text-muted);
+      padding: 0.8rem 1rem;
+      font-size: 0.8rem;
+      color: var(--muted-fg);
       margin-bottom: 1.25rem;
     }
+
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 0.7rem 1rem;
+      background: var(--card); color: var(--foreground);
+      border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      font-weight: 600; font-size: 0.875rem;
+      cursor: pointer; transition: var(--transition);
+      text-decoration: none;
+    }
+    .btn-google:hover {
+      background: var(--muted);
+      border-color: rgba(0,82,255,0.2);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+    }
+    .btn-google img { width: 18px; height: 18px; }
   </style>
 </head>
 <body>
@@ -187,7 +212,13 @@
         </button>
       </form>
 
-      <div class="divider-text mt-4">or</div>
+      <div class="divider-text mt-4">or continue with</div>
+
+      <!-- Google OAuth Button -->
+      <a href="/api/auth/google" class="btn-google mt-1 mb-3">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+        Continue with Google
+      </a>
 
       <p class="text-center mb-0" style="color:var(--text-muted);font-size:0.9rem">
         New to SkillSwap?

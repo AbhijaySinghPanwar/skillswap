@@ -1,34 +1,118 @@
-/* ─── Dashboard Logic ────────────────────────────────────────────────────── */
+/* ─── Dashboard Logic — Production Upgrade ──────────────────────────────────
+ *  Features:
+ *  - Socket.IO real-time chat (replaces polling)
+ *  - Real-time notifications
+ *  - Online/offline status
+ *  - Paginated user list with "Load More" button
+ * ─────────────────────────────────────────────────────────────────────────── */
 
 let currentUser = null;
 let allUsers = [];
 let allRequests = { sent: [], received: [] };
 let currentChatUser = null;
-let chatPollInterval = null;
 
+// ── Pagination state ────────────────────────────────────────────────────────
+let currentPage = 1;
+const PAGE_LIMIT = 12;
+let totalPages = 1;
+let isMatchOnlyFilter = false;
+
+// ── Notifications state ─────────────────────────────────────────────────────
+let notifications = [];
+let notifDropdownOpen = false;
+
+// ── Socket.IO instance ────────────────────────────────────────────────────
+let socket = null;
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 $(document).ready(function () {
-  // Auth guard
+  // Auth guard — check session/JWT before loading anything
   checkAuth().then(auth => {
     if (!auth || !auth.loggedIn) return;
     loadCurrentUser();
-    loadUsers();
+    loadUsers(1); // Start on page 1
     loadRequests();
     loadChatContacts();
+    loadNotifications();
   });
 
   // Live search
   $('#user-search').on('input', function () {
     renderUsers($(this).val().toLowerCase());
   });
+
+  // Close notification dropdown when clicking outside
+  $(document).on('click', function (e) {
+    if (!$(e.target).closest('.notif-wrap').length) {
+      closeNotifDropdown();
+    }
+  });
 });
 
-// ─── Load Current User ────────────────────────────────────────────────────────
+// ─── Load Current User + Boot Socket.IO ───────────────────────────────────────
 function loadCurrentUser() {
   $.get('/api/auth/me').done(res => {
     currentUser = res.user;
     $('#nav-user-name').text(currentUser.name);
     $('#sidebar-name').text(currentUser.name);
     $('#sidebar-avatar').html(getAvatar(currentUser.name, 'md', 0));
+
+    // ── Initialize Socket.IO after we know who the user is ─────────────────
+    initSocket();
+  });
+}
+
+// ─── Socket.IO Setup ──────────────────────────────────────────────────────────
+function initSocket() {
+  socket = io({ withCredentials: true }); // JWT cookie sent automatically
+
+  socket.on('connect', () => {
+    console.log('⚡ Socket.IO connected:', socket.id);
+    // Explicitly join personal room in case JWT auth was async
+    if (currentUser) {
+      socket.emit('joinRoom', currentUser._id);
+    }
+  });
+
+  // ── Incoming real-time message ──────────────────────────────────────────
+  socket.on('newMessage', (message) => {
+    // Only update the chat UI if the message is from the currently open chat
+    if (currentChatUser && message.conversationWith === currentChatUser.id) {
+      appendMessage(message);
+    } else {
+      // Flash notification for message from another user
+      const senderName = message.sender?.name || 'Someone';
+      showToast(`💬 New message from ${senderName}`, 'info');
+    }
+  });
+
+  // ── Incoming real-time notification ────────────────────────────────────
+  socket.on('newNotification', (notif) => {
+    notifications.unshift(notif);
+    updateNotifUI();
+    showToast(notif.text, 'info');
+  });
+
+  // ── Online/offline status changes ───────────────────────────────────────
+  socket.on('userStatusChange', ({ userId, isOnline }) => {
+    // Update the online dot in chat contacts list
+    const $dot = $(`#contact-status-${userId}`);
+    if ($dot.length) {
+      $dot.attr('class', isOnline ? 'online-dot' : 'offline-dot');
+      $dot.attr('title', isOnline ? 'Online' : 'Offline');
+    }
+    // Update chat header status if this is the open chat
+    if (currentChatUser && currentChatUser.id === userId) {
+      $('#chat-partner-status').html(
+        isOnline
+          ? '<i class="bi bi-circle-fill me-1" style="font-size:0.5rem;color:var(--accent)"></i>Online'
+          : '<i class="bi bi-circle me-1" style="font-size:0.5rem"></i>Offline'
+      );
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('🔌 Socket.IO disconnected');
   });
 }
 
@@ -42,27 +126,71 @@ function switchTab(tabId, btn) {
   if (tabId === 'tab-matches') loadMatches();
 }
 
-// ─── Load All Users ───────────────────────────────────────────────────────────
-function loadUsers() {
-  $.get('/api/users').done(res => {
-    allUsers = res.users;
-    $('#stat-users').text(allUsers.length);
-    renderUsers('');
+// ─── Load Users (Paginated) ───────────────────────────────────────────────────
+function loadUsers(page = 1, append = false) {
+  if (page === 1 && !append) {
+    $('#users-grid').html(`
+      <div class="col-12 text-center py-5">
+        <div class="spinner-custom mx-auto"></div>
+        <div class="mt-3 text-muted">Loading users...</div>
+      </div>`);
+  }
+
+  $.get(`/api/users?page=${page}&limit=${PAGE_LIMIT}`).done(res => {
+    if (append) {
+      // Merge into existing list
+      allUsers = [...allUsers, ...res.users];
+    } else {
+      allUsers = res.users;
+      currentPage = 1;
+    }
+
+    currentPage = res.currentPage;
+    totalPages = res.totalPages;
+
+    // Update total user count in stats
+    $('#stat-users').text(res.totalUsers || allUsers.length);
+
+    renderUsers($('#user-search').val().toLowerCase(), isMatchOnlyFilter, append);
+    updateLoadMoreButton();
   }).fail(() => showToast('Failed to load users', 'error'));
+}
+
+function loadMoreUsers() {
+  if (currentPage >= totalPages) return;
+  const $btn = $('#load-more-btn');
+  $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Loading...');
+
+  const nextPage = currentPage + 1;
+  $.get(`/api/users?page=${nextPage}&limit=${PAGE_LIMIT}`).done(res => {
+    // Append new users to existing list
+    allUsers = [...allUsers, ...res.users];
+    currentPage = res.currentPage;
+    totalPages = res.totalPages;
+
+    renderUsers($('#user-search').val().toLowerCase(), isMatchOnlyFilter, true);
+    updateLoadMoreButton();
+  }).fail(() => showToast('Failed to load more users', 'error'))
+    .always(() => $btn.prop('disabled', false).html('<i class="bi bi-arrow-down-circle"></i> Load More Users'));
+}
+
+function updateLoadMoreButton() {
+  const $wrap = $('#load-more-wrap');
+  if (currentPage < totalPages) {
+    $wrap.css('display', 'flex').css('justify-content', 'center');
+  } else {
+    $wrap.css('display', 'none');
+  }
 }
 
 function filterUsers(type, btn) {
   $('.filter-btn').removeClass('active');
   $(btn).addClass('active');
-  const search = $('#user-search').val().toLowerCase();
-  if (type === 'match') {
-    renderUsers(search, true);
-  } else {
-    renderUsers(search, false);
-  }
+  isMatchOnlyFilter = type === 'match';
+  renderUsers($('#user-search').val().toLowerCase(), isMatchOnlyFilter);
 }
 
-function renderUsers(search, matchOnly = false) {
+function renderUsers(search, matchOnly = false, append = false) {
   const $grid = $('#users-grid');
   let filtered = allUsers.filter(u => {
     const nameMatch = u.name.toLowerCase().includes(search);
@@ -80,7 +208,14 @@ function renderUsers(search, matchOnly = false) {
     return;
   }
 
-  $grid.html(filtered.map((u, i) => buildUserCard(u, i)).join(''));
+  const startIndex = append ? $grid.children('.col-sm-6').length : 0;
+  const cards = filtered.slice(startIndex).map((u, i) => buildUserCard(u, startIndex + i)).join('');
+
+  if (append) {
+    $grid.append(cards);
+  } else {
+    $grid.html(filtered.map((u, i) => buildUserCard(u, i)).join(''));
+  }
 }
 
 function buildUserCard(u, i) {
@@ -181,7 +316,6 @@ function openRequestModal(userId, userName, theirOffered, theirWanted) {
   $('#modal-user-skills').text('Offers: ' + (theirOffered.join(', ') || 'None'));
   $('#modal-avatar').html(getAvatar(userName, 'md', 1));
 
-  // Their skills offered = what I can want; my skills offered = what I offer
   const $offered = $('#modal-skill-offered').empty();
   const $wanted = $('#modal-skill-wanted').empty();
 
@@ -218,7 +352,7 @@ function submitRequest() {
     method: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ toUser, skillOffered, skillWanted, message }),
-    success: function (res) {
+    success: function () {
       showToast('Request sent successfully! 🎉', 'success');
       bootstrap.Modal.getInstance(document.getElementById('requestModal')).hide();
       loadRequests();
@@ -349,7 +483,7 @@ function updateRequest(id, status) {
     method: 'PUT',
     contentType: 'application/json',
     data: JSON.stringify({ status }),
-    success: function (res) {
+    success: function () {
       showToast(`Request ${status}! ${status === 'accepted' ? '🎉' : ''}`, status === 'accepted' ? 'success' : 'info');
       loadRequests();
       loadChatContacts();
@@ -374,7 +508,7 @@ function cancelRequest(id) {
   });
 }
 
-// ─── Chat ─────────────────────────────────────────────────────────────────────
+// ─── Chat (Real-time with Socket.IO) ─────────────────────────────────────────
 function loadChatContacts() {
   $.get('/api/messages/contacts').done(res => {
     const $list = $('#chat-contacts-list');
@@ -387,7 +521,10 @@ function loadChatContacts() {
         ${getAvatar(c.name, 'sm', i)}
         <div>
           <div style="font-size:0.875rem;font-weight:600">${c.name}</div>
-          <div style="font-size:0.75rem;color:var(--text-muted)">Tap to chat</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);display:flex;align-items:center;gap:3px">
+            <span class="${c.isOnline ? 'online-dot' : 'offline-dot'}" id="contact-status-${c._id}" title="${c.isOnline ? 'Online' : 'Offline'}"></span>
+            ${c.isOnline ? 'Online' : 'Offline'}
+          </div>
         </div>
       </div>`).join(''));
   });
@@ -395,7 +532,6 @@ function loadChatContacts() {
 
 function openChat(userId, userName, avatarIdx) {
   currentChatUser = { id: userId, name: userName, avatarIdx };
-  if (chatPollInterval) clearInterval(chatPollInterval);
 
   $('.chat-contact-item').removeClass('active');
   $(`#contact-${userId}`).addClass('active');
@@ -406,7 +542,9 @@ function openChat(userId, userName, avatarIdx) {
       ${getAvatar(userName, 'sm', avatarIdx)}
       <div>
         <div style="font-weight:700;font-size:0.95rem">${userName}</div>
-        <div style="font-size:0.75rem;color:var(--accent)"><i class="bi bi-circle-fill me-1" style="font-size:0.5rem"></i>Active swap partner</div>
+        <div id="chat-partner-status" style="font-size:0.75rem;color:var(--accent)">
+          <i class="bi bi-circle-fill me-1" style="font-size:0.5rem"></i>Loading...
+        </div>
       </div>
     </div>
     <div class="messages-list" id="messages-list"></div>
@@ -420,31 +558,44 @@ function openChat(userId, userName, avatarIdx) {
     if (e.key === 'Enter') sendMessage();
   });
 
+  // Fetch message history from the API
   fetchMessages(userId);
-  chatPollInterval = setInterval(() => fetchMessages(userId), 5000);
 }
 
 function fetchMessages(userId) {
   $.get(`/api/messages/${userId}`).done(res => {
     const $list = $('#messages-list');
     if (!$list.length) return;
-    const atBottom = $list[0].scrollHeight - $list.scrollTop() - $list.outerHeight() < 60;
 
     if (!res.messages.length) {
       $list.html(`<div class="empty-state" style="padding:2rem"><div class="empty-state-icon" style="font-size:2.5rem"><i class="bi bi-chat-heart"></i></div><h5>No messages yet</h5><p>Say hello and start your skill exchange!</p></div>`);
       return;
     }
 
-    $list.html(res.messages.map(m => {
-      const isMine = m.sender._id === (currentUser ? currentUser._id : '');
-      return `<div class="d-flex flex-column ${isMine ? 'align-items-end' : 'align-items-start'}">
-        <div class="message-bubble ${isMine ? 'message-mine' : 'message-theirs'}">${m.content}</div>
-        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;padding:0 6px">${relativeTime(m.createdAt)}</div>
-      </div>`;
-    }).join(''));
-
-    if (atBottom || true) $list.scrollTop($list[0].scrollHeight);
+    $list.html(res.messages.map(m => buildMessageBubble(m)).join(''));
+    $list.scrollTop($list[0].scrollHeight);
   });
+}
+
+function buildMessageBubble(m) {
+  const isMine = m.sender._id === (currentUser ? currentUser._id : '');
+  return `<div class="d-flex flex-column ${isMine ? 'align-items-end' : 'align-items-start'}">
+    <div class="message-bubble ${isMine ? 'message-mine' : 'message-theirs'}">${m.content}</div>
+    <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;padding:0 6px">${relativeTime(m.createdAt)}</div>
+  </div>`;
+}
+
+// Append a real-time incoming message without refetching all history
+function appendMessage(message) {
+  const $list = $('#messages-list');
+  if (!$list.length) return;
+
+  // Remove "no messages yet" empty state if present
+  $list.find('.empty-state').remove();
+
+  const atBottom = $list[0].scrollHeight - $list.scrollTop() - $list.outerHeight() < 80;
+  $list.append(buildMessageBubble(message));
+  if (atBottom) $list.scrollTop($list[0].scrollHeight);
 }
 
 function sendMessage() {
@@ -452,12 +603,99 @@ function sendMessage() {
   if (!content || !currentChatUser) return;
   $('#chat-input').val('');
 
+  // Optimistically render the sent message immediately (feels instant)
+  const optimisticMsg = {
+    sender: { _id: currentUser._id, name: currentUser.name },
+    receiver: { _id: currentChatUser.id },
+    content,
+    createdAt: new Date().toISOString()
+  };
+  appendMessage(optimisticMsg);
+
   $.ajax({
     url: '/api/messages',
     method: 'POST',
     contentType: 'application/json',
     data: JSON.stringify({ receiverId: currentChatUser.id, content }),
-    success: function () { fetchMessages(currentChatUser.id); },
-    error: function (xhr) { showToast(xhr.responseJSON?.message || 'Failed to send message', 'error'); }
+    error: function (xhr) {
+      showToast(xhr.responseJSON?.message || 'Failed to send message', 'error');
+    }
   });
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+function loadNotifications() {
+  $.get('/api/notifications').done(res => {
+    notifications = res.notifications;
+    updateNotifUI();
+  });
+}
+
+function updateNotifUI() {
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const $badge = $('#notif-badge');
+
+  if (unreadCount > 0) {
+    $badge.text(unreadCount > 9 ? '9+' : unreadCount).addClass('show');
+  } else {
+    $badge.removeClass('show');
+  }
+
+  renderNotifList();
+}
+
+function renderNotifList() {
+  const $list = $('#notif-list');
+  if (!notifications.length) {
+    $list.html('<div class="notif-empty"><i class="bi bi-bell-slash d-block mb-2" style="font-size:1.5rem;opacity:0.3"></i>No notifications yet</div>');
+    return;
+  }
+
+  const iconMap = {
+    request_received: { icon: 'bi-envelope-fill', color: 'rgba(255,179,71,0.2)', fg: 'var(--accent-warm)' },
+    request_accepted: { icon: 'bi-check-circle-fill', color: 'rgba(67,217,173,0.2)', fg: 'var(--accent)' },
+    request_rejected: { icon: 'bi-x-circle-fill', color: 'rgba(255,101,132,0.2)', fg: 'var(--secondary)' },
+    message: { icon: 'bi-chat-dots-fill', color: 'rgba(108,99,255,0.2)', fg: 'var(--primary)' }
+  };
+
+  $list.html(notifications.slice(0, 20).map(n => {
+    const style = iconMap[n.type] || { icon: 'bi-bell', color: 'rgba(108,99,255,0.2)', fg: 'var(--primary)' };
+    return `
+      <div class="notif-item ${!n.isRead ? 'unread' : ''}" onclick="markNotifRead('${n._id}', this)">
+        <div class="notif-icon" style="background:${style.color};color:${style.fg}">
+          <i class="bi ${style.icon}"></i>
+        </div>
+        <div class="flex-fill">
+          <div class="notif-text">${n.text}</div>
+          <div class="notif-time">${relativeTime(n.createdAt)}</div>
+        </div>
+      </div>`;
+  }).join(''));
+}
+
+function toggleNotifDropdown() {
+  notifDropdownOpen = !notifDropdownOpen;
+  $('#notif-dropdown').toggleClass('show', notifDropdownOpen);
+}
+
+function closeNotifDropdown() {
+  notifDropdownOpen = false;
+  $('#notif-dropdown').removeClass('show');
+}
+
+function markNotifRead(id, el) {
+  $(el).removeClass('unread');
+  // Update local state
+  const n = notifications.find(n => n._id === id);
+  if (n) n.isRead = true;
+  updateNotifUI();
+
+  $.ajax({ url: `/api/notifications/${id}/read`, method: 'PUT' });
+}
+
+function markAllRead() {
+  notifications.forEach(n => n.isRead = true);
+  updateNotifUI();
+  closeNotifDropdown();
+  $.ajax({ url: '/api/notifications/read-all', method: 'PUT' });
 }

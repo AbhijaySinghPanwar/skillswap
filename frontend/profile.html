@@ -9,27 +9,29 @@
   <link rel="stylesheet" href="css/style.css" />
   <style>
     .profile-hero {
-      background: var(--surface);
+      background: var(--card);
       border-bottom: 1px solid var(--border);
       padding: 3rem 0 0;
       position: relative;
       overflow: hidden;
     }
+    /* Subtle blue glow at top */
     .profile-hero-bg {
       position: absolute; inset: 0;
-      background: radial-gradient(ellipse 80% 100% at 50% 0%, rgba(108,99,255,0.12), transparent 60%);
+      background: radial-gradient(ellipse 80% 100% at 50% 0%, rgba(0,82,255,0.05), transparent 60%);
       pointer-events: none;
     }
     .profile-avatar-wrap {
       position: relative;
       display: inline-block;
     }
+    /* Spinning gradient ring around avatar */
     .avatar-ring {
       position: absolute; inset: -4px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+      background: linear-gradient(135deg, var(--accent), var(--accent-2), #a78bfa);
       z-index: -1;
-      animation: spin 8s linear infinite;
+      animation: spin 10s linear infinite;
     }
     .profile-tabs {
       display: flex;
@@ -38,58 +40,55 @@
       margin-top: 2rem;
     }
     .profile-tab {
-      padding: 0.75rem 1.5rem;
+      padding: 0.7rem 1.5rem;
       cursor: pointer;
-      color: var(--text-muted);
+      color: var(--muted-fg);
       font-weight: 500;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       border-bottom: 2px solid transparent;
       transition: var(--transition);
       background: none;
-      border-left: none;
-      border-right: none;
-      border-top: none;
+      border-left: none; border-right: none; border-top: none;
+      font-family: 'Inter', sans-serif;
     }
-    .profile-tab:hover { color: var(--text-primary); }
+    .profile-tab:hover { color: var(--foreground); }
     .profile-tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
     }
     .section-card {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 1.75rem;
       margin-bottom: 1.5rem;
+      transition: var(--transition);
     }
+    .section-card:hover { box-shadow: var(--shadow-md); border-color: rgba(0,82,255,0.1); }
     .section-card-title {
-      font-family: 'Syne', sans-serif;
+      font-family: 'Inter', sans-serif;
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 0.95rem;
       margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
+      color: var(--foreground);
     }
     .info-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0.75rem 0;
+      display: flex; align-items: center; gap: 12px;
+      padding: 0.7rem 0;
       border-bottom: 1px solid var(--border);
     }
     .info-row:last-child { border-bottom: none; }
     .info-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      min-width: 100px;
+      font-size: 0.78rem; color: var(--muted-fg);
+      font-weight: 600; min-width: 90px;
+      text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .info-value { color: var(--text-primary); font-size: 0.9rem; }
+    .info-value { color: var(--foreground); font-size: 0.875rem; }
     .save-btn-wrap {
-      position: sticky;
-      bottom: 0;
-      background: linear-gradient(to top, var(--dark) 60%, transparent);
+      position: sticky; bottom: 0;
+      background: linear-gradient(to top, var(--background) 60%, transparent);
       padding: 1.5rem 0 1rem;
       margin-top: 2rem;
     }
@@ -107,8 +106,8 @@
           <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
           <li class="nav-item"><a class="nav-link active" href="/profile">Profile</a></li>
           <li class="nav-item ms-2">
-            <button class="btn btn-sm" style="background:var(--glass-light);color:var(--text-secondary);border:1px solid var(--border)" onclick="logout()">
-              <i class="bi bi-box-arrow-right"></i> Logout
+            <button class="btn btn-sm btn-outline-primary" onclick="logout()">
+              <i class="bi bi-box-arrow-right me-1"></i>Logout
             </button>
           </li>
         </ul>
@@ -127,10 +126,10 @@
             <div id="hero-avatar" class="avatar avatar-xl avatar-gradient-1">?</div>
           </div>
           <div class="pb-4 flex-fill">
-            <div style="font-size:0.75rem;color:var(--primary);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Your Profile</div>
-            <h1 id="hero-name" style="font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin-bottom:4px">Loading...</h1>
-            <div id="hero-email" style="color:var(--text-muted);font-size:0.9rem"></div>
-            <div id="hero-bio" style="color:var(--text-secondary);font-size:0.9rem;margin-top:6px;max-width:500px"></div>
+            <div style="font-size:0.7rem;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;font-family:'JetBrains Mono',monospace">Your Profile</div>
+            <h1 id="hero-name" style="font-family:'Calistoga',Georgia,serif;font-weight:400;font-size:2rem;letter-spacing:-0.02em;margin-bottom:4px;color:var(--foreground)">Loading...</h1>
+            <div id="hero-email" style="color:var(--muted-fg);font-size:0.875rem"></div>
+            <div id="hero-bio" style="color:var(--muted-fg);font-size:0.875rem;margin-top:6px;max-width:500px;line-height:1.65"></div>
             <div class="d-flex gap-3 mt-3 flex-wrap" id="hero-stats"></div>
           </div>
           <div class="pb-4">
@@ -154,14 +153,14 @@
           <div class="col-md-6">
             <div class="section-card">
               <div class="section-card-title">
-                <span style="width:32px;height:32px;background:rgba(67,217,173,0.15);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-mortarboard-fill"></i></span>
+                <span style="width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:8px;display:flex;align-items:center;justify-content:center;color:white"><i class="bi bi-mortarboard-fill"></i></span>
                 Skills I Offer
               </div>
               <div id="view-offered" class="d-flex flex-wrap gap-2"></div>
             </div>
             <div class="section-card">
               <div class="section-card-title">
-                <span style="width:32px;height:32px;background:rgba(255,179,71,0.15);color:var(--accent-warm);border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-search-heart-fill"></i></span>
+                <span style="width:32px;height:32px;background:rgba(239,68,68,0.1);color:#dc2626;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-search-heart-fill"></i></span>
                 Skills I Want
               </div>
               <div id="view-wanted" class="d-flex flex-wrap gap-2"></div>
