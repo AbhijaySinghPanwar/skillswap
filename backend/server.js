@@ -38,6 +38,12 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
+// ─── Trust Proxy ──────────────────────────────────────────────────────────────
+// Required when deployed behind a reverse proxy (e.g., Render, Heroku, Nginx).
+// Without this, express-rate-limit throws ERR_ERL_UNEXPECTED_X_FORWARDED_FOR
+// because it sees the X-Forwarded-For header but trust proxy is false by default.
+app.set('trust proxy', 1);
+
 // ─── Security Middleware ───────────────────────────────────────────────────────
 // Helmet sets secure HTTP response headers (HSTS, XSS filter, etc.)
 app.use(helmet({
