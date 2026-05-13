@@ -15,7 +15,7 @@ const isAuthenticated = (req, res, next) => {
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'skillswap-access-secret-fallback-2024');
       req.userId = decoded.id;
       req.userName = decoded.name;
       return next();
@@ -45,7 +45,7 @@ const isGuest = (req, res, next) => {
   const token = req.cookies?.accessToken;
   if (token) {
     try {
-      jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+      jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'skillswap-access-secret-fallback-2024');
       return res.status(400).json({ success: false, message: 'Already logged in' });
     } catch (_) {
       // Expired token, let them through

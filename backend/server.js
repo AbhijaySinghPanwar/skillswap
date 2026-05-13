@@ -149,7 +149,7 @@ io.use((socket, next) => {
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'skillswap-access-secret-fallback-2024');
       socket.userId = decoded.id;
       socket.userName = decoded.name;
       return next();

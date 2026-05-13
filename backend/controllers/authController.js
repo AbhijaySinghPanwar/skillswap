@@ -10,13 +10,16 @@ const User = require('../models/User');
 const issueTokens = (res, user) => {
   const payload = { id: user._id, name: user.name, email: user.email };
 
-  const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
+  const accessSecret = process.env.JWT_ACCESS_SECRET || 'skillswap-access-secret-fallback-2024';
+  const refreshSecret = process.env.JWT_REFRESH_SECRET || 'skillswap-refresh-secret-fallback-2024';
+
+  const accessToken = jwt.sign(payload, accessSecret, {
     expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m'
   });
 
   const refreshToken = jwt.sign(
     { id: user._id },
-    process.env.JWT_REFRESH_SECRET,
+    refreshSecret,
     { expiresIn: process.env.JWT_REFRESH_EXPIRES || '7d' }
   );
 
@@ -116,6 +119,7 @@ const login = async (req, res) => {
       user: user.toJSON()
     });
   } catch (error) {
+    console.error('❌ Login error:', error.message, error.stack);
     res.status(500).json({ success: false, message: 'Server error. Please try again.' });
   }
 };
@@ -158,7 +162,8 @@ const checkAuth = (req, res) => {
   const token = req.cookies?.accessToken;
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+      const accessSecret = process.env.JWT_ACCESS_SECRET || 'skillswap-access-secret-fallback-2024';
+      const decoded = jwt.verify(token, accessSecret);
       return res.json({
         success: true,
         loggedIn: true,
@@ -191,11 +196,13 @@ const refreshToken = (req, res) => {
     return res.status(401).json({ success: false, message: 'No refresh token provided' });
   }
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const refreshSecret = process.env.JWT_REFRESH_SECRET || 'skillswap-refresh-secret-fallback-2024';
+    const accessSecret = process.env.JWT_ACCESS_SECRET || 'skillswap-access-secret-fallback-2024';
+    const decoded = jwt.verify(token, refreshSecret);
     // Issue a new access token only
     const accessToken = jwt.sign(
       { id: decoded.id },
-      process.env.JWT_ACCESS_SECRET,
+      accessSecret,
       { expiresIn: process.env.JWT_ACCESS_EXPIRES || '15m' }
     );
     res.cookie('accessToken', accessToken, {
